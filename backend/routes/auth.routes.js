@@ -2,7 +2,20 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User'); // Asegúrate de que la ruta sea correcta
+const verifyToken = require('../middleware/verifyToken');
 const router = express.Router();
+
+// Ruta para obtener el nombre de usuario
+router.get('/me', verifyToken, async (req, res) => {
+    try {
+      const user = await User.findById(req.userId); // `req.userId` debe estar en el token
+      if (!user) return res.status(404).json({ message: 'Usuario no encontrado' });
+  
+      res.json({ name: user.name });
+    } catch (error) {
+      res.status(500).json({ message: 'Error del servidor' });
+    }
+});
 
 // Registro de usuario
 router.post('/register', async (req, res) => {

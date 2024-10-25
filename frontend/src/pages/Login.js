@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const navigate = useNavigate();
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -15,6 +16,7 @@ const Login = () => {
             });
             localStorage.setItem('token', response.data.token); // Guardamos el token en localStorage
             alert('Login exitoso');
+            navigate('/dashboard');
             console.log(response.data);
         } catch (error) {
             alert('Error al iniciar sesión');
