@@ -15,8 +15,22 @@ const createProduct = async (req, res) => {
 // Obtener todos los productos
 const getAllProducts = async (req, res) => {
     try {
-        const products = await Product.find();
-        res.json(products);
+        const page = Number(req.query.page) || 1; // Asegúrate de convertir a número
+        const limit = Number(req.query.limit) || 10; // Asegúrate de convertir a número
+
+        const products = await Product.find()
+            .limit(limit) // No necesitas convertir a número aquí porque ya lo hiciste arriba
+            .skip((page - 1) * limit);
+
+        const totalProducts = await Product.countDocuments(); // Total de documentos en la colección
+        const totalPages = Math.ceil(totalProducts / limit); // Calcular total de páginas
+
+        res.json({
+            products,
+            totalPages,
+            currentPage: page,
+            totalProducts, // Opcional, si quieres enviar el total de productos al frontend
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

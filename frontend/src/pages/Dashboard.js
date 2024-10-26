@@ -41,8 +41,11 @@ const Dashboard = ({name}) => {
   return (
     <div>
         <Navbar bg="dark" variant="dark" expand="lg">
-            <Container>
-                <Navbar.Brand as={Link} to="/dashboard">Mi Aplicación</Navbar.Brand>
+            <Container fluid>
+                <Navbar.Brand as={Link} to="/dashboard" className='mb-0 h1'>
+                  Stock Manager
+                </Navbar.Brand>
+
                 <Navbar.Toggle aria-controls="basic-navbar-nav" />
                 <Navbar.Collapse id="basic-navbar-nav">
                     <Nav className="me-auto">
@@ -60,9 +63,14 @@ const Dashboard = ({name}) => {
         </Navbar>
       
       <Container className="mt-4">
-        <h1>Bienvenido al Dashboard</h1>
-        <p>Aquí puedes gestionar tus productos.</p>
+        
       </Container>
+
+      <footer>
+        <div className='container p-3 mt-5 border-top'>
+          <small className='d-block text-muted text-center'>&copy; 2024 - Stock Manager</small>
+        </div>
+      </footer>
     </div>
   );
 };

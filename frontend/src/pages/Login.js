@@ -1,15 +1,6 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import {
-  MDBBtn,
-  MDBContainer,
-  MDBCard,
-  MDBCardBody,
-  MDBInput,
-  MDBRow,
-  MDBCol,
-} from 'mdb-react-ui-kit';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -33,52 +24,57 @@ const Login = () => {
     };
 
     return (
-        <MDBContainer fluid className='my-5'>
+        <div className='d-flex justify-content-center align-items-center vh-100'>
 
-            <MDBRow className='g-0 align-items-center'>
-                <MDBCol col='6'>
-                    <MDBCard className='my-5 cascading-right' style={{ background: 'hsla(0, 0%, 100%, 0.55)', backdropFilter: 'blur(30px)' }}>
-                        <MDBCardBody className='p-5 shadow-5 text-center'>
+            <div className='row'>
+                <div className='col'>
+                    <div className='card text-center' style={{ width: '500px', height: '400px', display: 'flex', justifyContent: 'space-between'}}>
+                        <div class="card-header">
+                            <ul class="nav nav-tabs card-header-tabs">
+                                <li class="nav-item">
+                                    <a class="nav-link active" aria-current="true" href="/">Iniciar Sesión</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/register">Registro</a>
+                                </li>
+                            </ul>
+                        </div>
 
-                            <h2 className="fw-bold mb-5">Iniciar Sesión</h2>
+                        <h2 className="card-title mt-4">Iniciar Sesión</h2>
+                        
+                        <div className='card-body d-flex flex-column justify-content-center'>
 
                             <form onSubmit={handleLogin}>
-                                <MDBInput
-                                    wrapperClass='mb-4'
-                                    label='Correo electrónico'
-                                    id='form1'
-                                    type='email'
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                />
-                                <MDBInput
-                                    wrapperClass='mb-4'
-                                    label='Contraseña'
-                                    id='form2'
-                                    type='password'
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                />
+                                <div className='input-group mb-3'>
+                                    <span className='input-group-text'>Correo Electrónico</span>
+                                    <input
+                                        placeholder='Ingrese un correo electrónico'
+                                        className='form-control'
+                                        type='text'
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        required
+                                    />
+                                </div>
 
-                                <MDBBtn type="submit" className='w-100 mb-4' size='md'>Iniciar Sesión</MDBBtn>
+                                <div className='input-group mb-3'>
+                                    <span className='input-group-text'>Contraseña</span>
+                                    <input
+                                        placeholder='Ingrese su contraseña'
+                                        className='form-control'
+                                        type='password'
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                                <button type="submit" className='btn btn-primary w-100 mt-5'>Iniciar Sesión</button>
                             </form>
-
-                            <p className="mb-0">
-                                ¿No tienes una cuenta? <Link to="/register">Regístrate aquí</Link>
-                            </p>
-
-                        </MDBCardBody>
-                    </MDBCard>
-                </MDBCol>
-
-                <MDBCol col='6'>
-                    <img src="https://mdbootstrap.com/img/new/ecommerce/vertical/004.jpg" className="w-100 rounded-4 shadow-4" alt="Background" fluid/>
-                </MDBCol>
-            </MDBRow>
-
-        </MDBContainer>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 };
 
