@@ -6,7 +6,9 @@ const {
     getAllProducts,
     getProductById,
     updateProduct,
-    disableProduct
+    disableProduct,
+    getDisabledProducts,
+    enableProduct
 } = require('../controllers/product.controller');
 
 const verifyToken = require('../middleware/verifyToken');
@@ -25,5 +27,12 @@ router.put('/update/:id', verifyToken, updateProduct);
 
 // Deshabilitar un producto
 router.patch('/disable/:id', verifyToken, disableProduct);
+
+// Obtener los productos deshabilitados
+router.get('/disabled',verifyToken, getDisabledProducts);
+
+// Ruta para habilitar un producto
+router.patch('/enable/:id', verifyToken, enableProduct);
+
 
 module.exports = router;

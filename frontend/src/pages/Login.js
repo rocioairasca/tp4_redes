@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { Toaster, toast } from 'sonner';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -15,16 +16,22 @@ const Login = () => {
                 password,
             });
             localStorage.setItem('token', response.data.token);
-            navigate('/dashboard');
+            toast.success('Inicio de sesión exitoso');
+
+            setTimeout(() => {
+                navigate('/dashboard');
+            }, 1000);
+            
             console.log(response.data);
         } catch (error) {
-            alert('Error al iniciar sesión');
+            toast.error('Error al iniciar sesión');
             console.error(error);
         }
     };
 
     return (
         <div className='d-flex justify-content-center align-items-center vh-100'>
+            <Toaster />
 
             <div className='row'>
                 <div className='col'>

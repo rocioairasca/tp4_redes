@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { Toaster, toast } from 'sonner';
 
 const Register = () => {
     const [name, setName] = useState('');
@@ -14,16 +15,17 @@ const Register = () => {
                 email,
                 password,
             });
-            alert('Registro exitoso');
+            toast.success('Registro exitoso');
             console.log(response.data);
         } catch (error) {
-            alert('Error al registrar');
+            toast.error('Error al registrar');
             console.error(error);
         }
     };
 
     return (
         <div className='d-flex justify-content-center align-items-center vh-100'>
+            <Toaster />
             <div className='row'>
                 <div className='col'>
                     <div className='card text-center' style={{ width: '500px', height: '400px', display: 'flex', justifyContent: 'space-between' }}>

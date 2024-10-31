@@ -4,6 +4,7 @@ import Register from './pages/Register';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Products from './pages/Products';
+import DisabledProducts from './pages/DisabledProducts';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path='/dashboard' element={<Dashboard/>}/>
         <Route path='/products' element={<Products/>}/>
+        <Route path="/products/disabled" element={<DisabledProducts />} />
       </Routes>
     </Router>
   );

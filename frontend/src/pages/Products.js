@@ -1,9 +1,10 @@
- import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { Navbar, Nav, Container, Button } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
+import { BsPencil, BsDashCircle } from "react-icons/bs";
 
 
 const Products = () => {
@@ -18,13 +19,17 @@ const Products = () => {
         acquisitionDate: ''
     });
     const [editMode, setEditMode] = useState(false);
-    const [selectedProducts, setSelectedProducts] = useState([]);
+    const [editProductId, setEditProductId] = useState(null);
     const [username, setUsername] = useState('');
     const navigate = useNavigate();
 
     const [currentPage, setCurrentPage] = useState(1);
     const [limit] = useState(10);
     const [totalProducts, setTotalProducts] = useState();
+
+    const goToDisabledProducts = () => {
+        navigate('/products/disabled');
+    };
 
     const token = localStorage.getItem('token');
     if (!token) {
@@ -100,6 +105,7 @@ const Products = () => {
     };
 
     const editProduct = async (id) => {
+        console.log("ID recibido en editProduct:", id);
         try {
             const token = localStorage.getItem('token');
             if (!token) {
@@ -118,6 +124,7 @@ const Products = () => {
 
             setProducts(products.map((a) => (a._id === id ? response.data : a)));
             setEditMode(false);
+            setEditProductId(null);
             setProduct({ 
                 name: '',
                 type: '',
@@ -147,20 +154,28 @@ const Products = () => {
                 availableQuantity: prodToEdit.availableQuantity,
                 unit: prodToEdit.unit,
                 price: prodToEdit.price,
-                acquisitionDate: prodToEdit.acquisitionDate,
+                acquisitionDate: new Date(prodToEdit.acquisitionDate).toISOString().split('T')[0],
             });
+            setEditProductId(id);
             setEditMode(true); // Cambia a modo edición
+
+            console.log("ID del producto a editar:", id);
         }
     };
 
-    const disableProducts = async () => {
-        await Promise.all(
-            selectedProducts.map(async (id) => {
-                await axios.patch(`http://localhost:4000/api/products/disable/${id}`, { disabled: true });
-            })
-        );
-        fetchProducts();
-        setSelectedProducts([]);
+    const disableProducts = async (id) => {
+        try {
+            console.log('Deshabilitando producto con ID:', id); // Verifica el ID
+            const response = await axios.patch(`http://localhost:4000/api/products/disable/${id}`, 
+                { isDisabled: true },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            console.log('Respuesta del servidor:', response.data); // Muestra la respuesta
+            fetchProducts(); // Refresca la lista de productos después de deshabilitar
+        } catch (error) {
+            console.error('Error deshabilitando producto:', error);
+        }
+
     };
 
     useEffect(() => {
@@ -201,7 +216,9 @@ const Products = () => {
                         <div className='card mb-4'>
                             <div className='card-header text-center'>{editMode ? 'Editar Producto' : 'Agregar Nuevo Producto'}</div>
                             <div className='card-body'>
-                                <form onSubmit={(e) => {e.preventDefault(); editMode ? editProduct() : createProduct();}}>
+                                <form onSubmit={(e) => {
+                                    console.log('Formulario enviado');
+                                    e.preventDefault(); editMode ? editProduct(editProductId) : createProduct();}}>
                                     <div className='mb-3'>
                                         <label className='form-label'>Nombre</label>
                                         <input
@@ -308,17 +325,21 @@ const Products = () => {
                                         <td style={{ textAlign: 'center' }}>{new Date(prod.acquisitionDate).toLocaleDateString()}</td> {/* Muestra la Fecha de Adquisición */}
                                         <td>
                                             <button className='btn btn-warning' onClick={() => handleEditClick(prod._id)}>
-                                                <span className="material-symbols-outlined">edit</span>
+                                                <BsPencil />
                                             </button>
                                             <button className='btn btn-danger' onClick={() => disableProducts(prod._id)}>
-                                                <span className="material-symbols-outlined">delete</span>
+                                                <BsDashCircle />
                                             </button>
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
-                        
+
+                        <button className='btn btn-secondary' onClick={goToDisabledProducts}>
+                            Ver Productos Deshabilitados
+                        </button>
+
                         <div className="d-flex justify-content-center align-items-center">
                             <button 
                                 className='btn btn-primary me-2' 
@@ -339,10 +360,6 @@ const Products = () => {
 
                     </div>
                 </div>
-
-                <button className="btn btn-danger mt-3" onClick={disableProducts}>
-                    Deshabilitar Productos Seleccionados
-                </button>
             </div>
 
             <footer>
