@@ -8,7 +8,6 @@ const usageSchema = new mongoose.Schema({
     totalArea: { type: Number, required: true, },
     crop: { type: String, required: true,},
     user: String,
-    notes: String,
     isDisabled: { type: Boolean, default: false }
 });
 

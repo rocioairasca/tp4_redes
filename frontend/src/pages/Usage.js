@@ -15,7 +15,6 @@ const Usage = () => {
         totalArea: '',
         crop: '',
         user: '',
-        notes: '',
         date: ''
     });
     const [editMode, setEditMode] = useState(false);
@@ -25,6 +24,12 @@ const Usage = () => {
     const [limit] = useState(10);
     const [totalUsages, setTotalUsages] = useState();
     const navigate = useNavigate();
+
+    const [products, setProducts] = useState([]);
+    const [unit, setUnit] = useState('');
+    const [lots, setLots] = useState([]);
+    const [selectedLots, setSelectedLots] = useState([]);
+    const [totalHectares, setTotalHectares] = useState(0);
 
     const token = localStorage.getItem('token');
     if (!token) {
@@ -45,9 +50,21 @@ const Usage = () => {
         }
     }, [navigate, token]);
 
+    const fetchProducts = useCallback(async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.get('http://localhost:4000/api/products/inventory', {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            setProducts(response.data.products); // Asegúrate de que la respuesta tiene esta estructura
+        } catch (error) {
+            console.error('Error al obtener los productos:', error);
+        }
+    }, []);
+
     const fetchUsages = useCallback(async () => {
         try {
-            const response = await axios.get(`http://localhost:4000/api/usage?page=${currentPage}&limit=${limit}`, {
+            const response = await axios.get(`http://localhost:4000/api/usages/history?page=${currentPage}&limit=${limit}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setUsages(response.data.usages);
@@ -57,9 +74,26 @@ const Usage = () => {
         }
     }, [currentPage, limit, token]);
 
+    const fetchLots = useCallback(async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.get('http://localhost:4000/api/lots/all', {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            setLots(response.data.lots);
+        } catch (error) {
+            console.error('Error al obtener los lotes:', error);
+        }
+    }, []);
+
     const createUsage = async () => {
         try {
-            const response = await axios.post('http://localhost:4000/api/usage/create', usage, {
+            const updatedUsage = {
+                ...usage,
+                user: username, // Añade el nombre del usuario aquí
+            };
+
+            const response = await axios.post('http://localhost:4000/api/usages/register', updatedUsage, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setUsages([...usages, response.data]);
@@ -71,7 +105,6 @@ const Usage = () => {
                 totalArea: '',
                 crop: '',
                 user: '',
-                notes: '',
                 date: ''
             });
             fetchUsages();
@@ -82,7 +115,7 @@ const Usage = () => {
 
     const editUsage = async (id) => {
         try {
-            const response = await axios.patch(`http://localhost:4000/api/usage/edit/${id}`, usage, {
+            const response = await axios.patch(`http://localhost:4000/api/usages/edit/${id}`, usage, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setUsages(usages.map((u) => (u._id === id ? response.data : u)));
@@ -96,7 +129,6 @@ const Usage = () => {
                 totalArea: '',
                 crop: '',
                 user: '',
-                notes: '',
                 date: ''
             });
         } catch (error) {
@@ -115,13 +147,54 @@ const Usage = () => {
                 totalArea: usageToEdit.totalArea,
                 crop: usageToEdit.crop,
                 user: usageToEdit.user,
-                notes: usageToEdit.notes,
                 date: new Date(usageToEdit.date).toISOString().split('T')[0],
             });
             setEditUsageId(id);
             setEditMode(true);
         }
     };
+
+    // Mapa de unidades
+    const unitMap = {
+        lt: 'Litros',
+        kg: 'Kilogramos',
+    };
+
+    // Función para manejar el cambio en la selección del producto
+    const handleProductChange = (e) => {
+        const selectedProductId = e.target.value;
+        const selectedProduct = products.find(prod => prod._id === selectedProductId);
+
+        setUsage({ ...usage, product: selectedProductId });
+        setUnit(selectedProduct ? unitMap[selectedProduct.unit] : ''); // Asignar la unidad del producto seleccionado
+    };
+
+    // Manejar la selección de múltiples lotes
+    const handleLotSelect = (event) => {
+        // Obtener los lotes seleccionados desde el evento
+        const selectedOptions = Array.from(event.target.selectedOptions).map(option => JSON.parse(option.value));
+    
+        // Crear un conjunto único de lotes seleccionados (sin duplicados)
+        const newSelectedLots = [...selectedLots, ...selectedOptions].reduce((acc, lot) => {
+            if (!acc.some(existingLot => existingLot._id === lot._id)) {
+                acc.push(lot);
+            }
+            return acc;
+        }, []);
+    
+        // Sumar las hectáreas de todos los lotes seleccionados
+        const newTotalHectares = newSelectedLots.reduce((total, lot) => total + lot.hectares, 0);
+    
+        // Actualizar los estados con los lotes únicos y el total de hectáreas
+        setSelectedLots(newSelectedLots);
+        setTotalHectares(newTotalHectares);
+
+        setUsage(prevUsage => ({
+            ...prevUsage,
+            lots: newSelectedLots,
+            totalArea: newTotalHectares
+        }));
+    };    
 
     const disableUsage = async (id) => {
         try {
@@ -137,7 +210,9 @@ const Usage = () => {
     useEffect(() => {
         fetchUsername();
         fetchUsages();
-    }, [fetchUsername, fetchUsages]);
+        fetchProducts();
+        fetchLots();
+    }, [fetchUsername, fetchUsages, fetchProducts, fetchLots]);
 
     const totalPages = Math.ceil(totalUsages / limit);
 
@@ -173,14 +248,17 @@ const Usage = () => {
                                     {/* Campos del formulario para el registro de uso */}
                                     <div className='mb-3'>
                                         <label className='form-label'>Producto</label>
-                                        <input
-                                            type='text'
-                                            name='product'
+                                        <select
                                             className='form-control'
                                             value={usage.product}
-                                            onChange={(e) => setUsage({ ...usage, product: e.target.value })}
+                                            onChange={handleProductChange}
                                             required
-                                        />
+                                        >
+                                            <option value="">Seleccionar producto</option>
+                                            {products.map((prod) => (
+                                                <option key={prod._id} value={prod._id}>{prod.name}</option>
+                                            ))}
+                                        </select>
                                     </div>
                                     <div className='mb-3'>
                                         <label className='form-label'>Cantidad</label>
@@ -195,28 +273,23 @@ const Usage = () => {
                                     </div>
                                     <div className='mb-3'>
                                         <label className='form-label'>Unidad</label>
-                                        <select
+                                        <input
                                             className='form-control'
                                             name='unit'
-                                            value={usage.unit}
-                                            onChange={(e) => setUsage({ ...usage, unit: e.target.value })}
-                                            required
+                                            value={unit}
+                                            readOnly
                                         >
-                                            <option value="">Seleccionar unidad</option>
-                                            <option value="lt">Litros</option>
-                                            <option value="kg">Kilogramos</option>
-                                        </select>
+                                        </input>
                                     </div>
                                     <div className='mb-3'>
-                                        <label className='form-label'>Total de Área</label>
-                                        <input
-                                            type='number'
-                                            name='totalArea'
-                                            className='form-control'
-                                            value={usage.totalArea}
-                                            onChange={(e) => setUsage({ ...usage, totalArea: e.target.value })}
-                                            required
-                                        />
+                                        <label className='form-label'>Seleccionar Lotes:</label>
+                                        <select className='form-control' multiple onChange={handleLotSelect}>
+                                            {lots.map((lot) => (
+                                                <option key={lot._id} value={JSON.stringify(lot)}>
+                                                    {lot.name} - {lot.hectares} hectáreas
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
                                     <div className='mb-3'>
                                         <label className='form-label'>Cultivo</label>
@@ -227,26 +300,6 @@ const Usage = () => {
                                             value={usage.crop}
                                             onChange={(e) => setUsage({ ...usage, crop: e.target.value })}
                                             required
-                                        />
-                                    </div>
-                                    <div className='mb-3'>
-                                        <label className='form-label'>Usuario</label>
-                                        <input
-                                            type='text'
-                                            name='user'
-                                            className='form-control'
-                                            value={usage.user}
-                                            onChange={(e) => setUsage({ ...usage, user: e.target.value })}
-                                            required
-                                        />
-                                    </div>
-                                    <div className='mb-3'>
-                                        <label className='form-label'>Notas</label>
-                                        <textarea
-                                            name='notes'
-                                            className='form-control'
-                                            value={usage.notes}
-                                            onChange={(e) => setUsage({ ...usage, notes: e.target.value })}
                                         />
                                     </div>
                                     <div className='mb-3'>
@@ -275,10 +328,10 @@ const Usage = () => {
                                     <th>Producto</th>
                                     <th>Cantidad</th>
                                     <th>Unidad</th>
-                                    <th>Total de Área</th>
+                                    <th>Lotes Seleccionados</th>
+                                    <th>Área Total (Hectáreas)</th>
                                     <th>Cultivo</th>
                                     <th>Usuario</th>
-                                    <th>Notas</th>
                                     <th>Fecha</th>
                                     <th>Acciones</th>
                                 </tr>
@@ -289,10 +342,14 @@ const Usage = () => {
                                         <td>{u.product}</td>
                                         <td>{u.amount}</td>
                                         <td>{u.unit}</td>
-                                        <td>{u.totalArea}</td>
+                                        <td>
+                                            {selectedLots.map(lot => (
+                                                <div key={lot._id}>{lot.name}</div>
+                                            ))}
+                                        </td>
+                                        <td>{totalHectares}</td>
                                         <td>{u.crop}</td>
                                         <td>{u.user}</td>
-                                        <td>{u.notes}</td>
                                         <td>{new Date(u.date).toLocaleDateString()}</td>
                                         <td>
                                             <Button variant="warning" onClick={() => handleEditClick(u._id)}><BsPencil /></Button>
@@ -303,10 +360,10 @@ const Usage = () => {
                             </tbody>
                         </table>
 
-                        <div className="pagination">
-                            <Button disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)}>Anterior</Button>
-                            <span>{currentPage} de {totalPages}</span>
-                            <Button disabled={currentPage === totalPages} onClick={() => setCurrentPage(currentPage + 1)}>Siguiente</Button>
+                        <div className="d-flex justify-content-center align-items-center">
+                            <button className="btn btn-primary me-2" disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)}>Anterior</button>
+                            <span className="mx-2">Página {currentPage}</span>
+                            <button className="btn btn-primary ms-2" disabled={currentPage === totalPages} onClick={() => setCurrentPage(currentPage + 1)}>Siguiente</button>
                         </div>
                     </div>
                 </div>
@@ -314,10 +371,10 @@ const Usage = () => {
 
             <footer>
                 <div className='container p-3 mt-5 border-top'>
-                <small className='d-block text-muted text-center'>&copy; 2024 - Stock Manager</small>
+                    <small className='d-block text-muted text-center'>&copy; 2024 - Stock Manager</small>
                 </div>
             </footer>
-            
+
         </div>
     );
 };

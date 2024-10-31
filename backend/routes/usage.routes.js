@@ -7,7 +7,7 @@ const router = express.Router();
 
 // Crear un registro de uso
 router.post('/register', verifyToken, async (req, res) => {
-    const { product: productId, amount, unit, lots, totalArea, crop, user, notes, date } = req.body;
+    const { product: productId, amount, unit, lots, totalArea, crop, user, date } = req.body;
     
     try {
         const product = await Product.findById(productId);
@@ -30,7 +30,6 @@ router.post('/register', verifyToken, async (req, res) => {
             totalArea,
             crop,
             user,
-            notes
         });
 
         await usage.save();
