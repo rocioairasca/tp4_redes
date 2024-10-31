@@ -67,6 +67,7 @@ const Usage = () => {
             const response = await axios.get(`http://localhost:4000/api/usages/history?page=${currentPage}&limit=${limit}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
+            console.log('Usages fetched:', response.data);
             setUsages(response.data.usages);
             setTotalUsages(response.data.totalUsages);
         } catch (error) {
@@ -80,6 +81,7 @@ const Usage = () => {
             const response = await axios.get('http://localhost:4000/api/lots/all', {
                 headers: { Authorization: `Bearer ${token}` },
             });
+            console.log(response.data.lots);
             setLots(response.data.lots);
         } catch (error) {
             console.error('Error al obtener los lotes:', error);
@@ -93,6 +95,7 @@ const Usage = () => {
                 user: username, // Añade el nombre del usuario aquí
             };
 
+            console.log('Creating usage:', updatedUsage); 
             const response = await axios.post('http://localhost:4000/api/usages/register', updatedUsage, {
                 headers: { Authorization: `Bearer ${token}` },
             });
@@ -173,7 +176,7 @@ const Usage = () => {
     const handleLotSelect = (event) => {
         // Obtener los lotes seleccionados desde el evento
         const selectedOptions = Array.from(event.target.selectedOptions).map(option => JSON.parse(option.value));
-    
+
         // Crear un conjunto único de lotes seleccionados (sin duplicados)
         const newSelectedLots = [...selectedLots, ...selectedOptions].reduce((acc, lot) => {
             if (!acc.some(existingLot => existingLot._id === lot._id)) {
@@ -181,20 +184,23 @@ const Usage = () => {
             }
             return acc;
         }, []);
-    
+
         // Sumar las hectáreas de todos los lotes seleccionados
-        const newTotalHectares = newSelectedLots.reduce((total, lot) => total + lot.hectares, 0);
-    
+        const newTotalHectares = newSelectedLots.reduce((total, lot) => total + lot.area, 0);
+
         // Actualizar los estados con los lotes únicos y el total de hectáreas
         setSelectedLots(newSelectedLots);
         setTotalHectares(newTotalHectares);
 
         setUsage(prevUsage => ({
             ...prevUsage,
-            lots: newSelectedLots,
+            lots: newSelectedLots.map(lot => lot._id),
             totalArea: newTotalHectares
         }));
-    };    
+
+        console.log("Lotes seleccionados (solo IDs):", newSelectedLots.map(lot => lot._id));
+        console.log("Área total calculada:", newTotalHectares);
+    };
 
     const disableUsage = async (id) => {
         try {
@@ -286,7 +292,7 @@ const Usage = () => {
                                         <select className='form-control' multiple onChange={handleLotSelect}>
                                             {lots.map((lot) => (
                                                 <option key={lot._id} value={JSON.stringify(lot)}>
-                                                    {lot.name} - {lot.hectares} hectáreas
+                                                    {lot.name} - {lot.area} hectáreas
                                                 </option>
                                             ))}
                                         </select>
@@ -339,15 +345,24 @@ const Usage = () => {
                             <tbody>
                                 {usages.map((u) => (
                                     <tr key={u._id}>
-                                        <td>{u.product}</td>
+                                        <td>{u.product.name}</td>
                                         <td>{u.amount}</td>
-                                        <td>{u.unit}</td>
+                                        <td>{u.product.unit}</td>
                                         <td>
-                                            {selectedLots.map(lot => (
-                                                <div key={lot._id}>{lot.name}</div>
-                                            ))}
+                                            {u.lots.map(lotId => {
+                                                const lot = lots.find(lot => lot._id === lotId);
+                                                if (lot) {
+                                                    return (
+                                                        <div key={lot._id}>
+                                                            <p>{lot.name}</p>
+                                                        </div>
+                                                    );
+                                                } else {
+                                                    return <div key={lotId}>Lote no encontrado</div>; // En caso de que no se encuentre el lote
+                                                }
+                                            })}
                                         </td>
-                                        <td>{totalHectares}</td>
+                                        <td>{u.totalArea}</td>
                                         <td>{u.crop}</td>
                                         <td>{u.user}</td>
                                         <td>{new Date(u.date).toLocaleDateString()}</td>
