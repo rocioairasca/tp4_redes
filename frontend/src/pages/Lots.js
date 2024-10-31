@@ -1,25 +1,35 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
-import { Navbar, Nav, Container, Button } from 'react-bootstrap';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import { BsPencil, BsDashCircle } from "react-icons/bs";
+import { Navbar, Container, Nav, Button } from 'react-bootstrap';
+import { BsPencil, BsDashCircle } from 'react-icons/bs';
 
 const Lots = () => {
     const [lots, setLots] = useState([]);
     const [lot, setLot] = useState({ name: '', area: '' });
+    const [username, setUsername] = useState('');
     const [editMode, setEditMode] = useState(false);
     const [editLotId, setEditLotId] = useState(null);
-    const [username, setUsername] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [limit] = useState(10); // Número de lotes por página
     const navigate = useNavigate();
 
+    const token = localStorage.getItem('token');
+    if (!token) {
+        navigate('/');
+    }
+
+    const goToDisabledLots = () => {
+        navigate('/lots/disabled');
+    };
+
     const fetchUsername = useCallback(async () => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            navigate('/');
-            return;
-        }
         try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                navigate('/');
+                return;
+            }
             const response = await axios.get('http://localhost:4000/api/auth/me', {
                 headers: { Authorization: `Bearer ${token}` },
             });
@@ -32,29 +42,27 @@ const Lots = () => {
         }
     }, [navigate]);
 
+    const handleLogout = useCallback(() => {
+        localStorage.removeItem('token');
+        navigate('/');
+    }, [navigate]);
+
     const fetchLots = useCallback(async () => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            navigate('/');
-            return;
-        }
         try {
+            const token = localStorage.getItem('token');
             const response = await axios.get('http://localhost:4000/api/lots/all', {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            setLots(response.data);
+            console.log('Response data:', response.data);
+            setLots(response.data.lots || []);
         } catch (error) {
-            console.error('Error al obtener los lotes:', error);
+            console.error('Error al obtener lotes:', error);
         }
-    }, [navigate]);
+    }, []);
 
     const createLot = async () => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            navigate('/');
-            return;
-        }
         try {
+            const token = localStorage.getItem('token');
             const response = await axios.post('http://localhost:4000/api/lots/create', lot, {
                 headers: { Authorization: `Bearer ${token}` },
             });
@@ -66,21 +74,17 @@ const Lots = () => {
     };
 
     const editLot = async (id) => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            navigate('/');
-            return;
-        }
         try {
+            const token = localStorage.getItem('token');
             const response = await axios.put(`http://localhost:4000/api/lots/update/${id}`, lot, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            setLots(lots.map((a) => (a._id === id ? response.data : a)));
+            setLots(lots.map((l) => (l._id === id ? response.data : l)));
             setEditMode(false);
             setEditLotId(null);
             setLot({ name: '', area: '' });
         } catch (error) {
-            console.error('Error editando lote:', error);
+            console.error('Error actualizando lote:', error);
         }
     };
 
@@ -94,16 +98,12 @@ const Lots = () => {
     };
 
     const disableLot = async (id) => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            navigate('/');
-            return;
-        }
         try {
-            await axios.delete(`http://localhost:4000/api/lots/delete/${id}`, {
+            const token = localStorage.getItem('token');
+            await axios.patch(`http://localhost:4000/api/lots/disable/${id}`, {}, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            setLots(lots.filter((l) => l._id !== id));
+            fetchLots(); // Refresca la lista de lotes después de eliminar
         } catch (error) {
             console.error('Error deshabilitando lote:', error);
         }
@@ -112,26 +112,32 @@ const Lots = () => {
     useEffect(() => {
         fetchUsername();
         fetchLots();
-    }, [fetchUsername, fetchLots]);
+    }, [fetchLots, fetchUsername]);
+
+    // Calcular la paginación
+    const totalPages = Math.ceil(lots.length / limit);
+    const startIndex = (currentPage - 1) * limit;
+    const endIndex = startIndex + limit;
+    const currentLots = lots.slice(startIndex, endIndex);
 
     return (
         <div>
             <Navbar bg="dark" variant="dark" expand="lg">
                 <Container fluid>
-                    <Navbar.Brand as={Link} to="/dashboard" className='mb-0 h1'>
-                        Stock Manager
-                    </Navbar.Brand>
+                    <Navbar.Brand as={Link} to="/dashboard" className='mb-0 h1'>Stock Manager</Navbar.Brand>
                     <Navbar.Toggle aria-controls="basic-navbar-nav" />
                     <Navbar.Collapse id="basic-navbar-nav">
                         <Nav className="me-auto">
                             <Nav.Link as={Link} to="/dashboard">Dashboard</Nav.Link>
+                            <Nav.Link as={Link} to="/products">Productos</Nav.Link>
                             <Nav.Link as={Link} to="/lots">Lotes</Nav.Link>
+                            <Nav.Link as={Link} to="/usage">Registro de Usos</Nav.Link>
                         </Nav>
                         <Nav className="ms-auto">
                             <Navbar.Text className="me-3">
                                 Bienvenido, {username}!
                             </Navbar.Text>
-                            <Button variant="danger outline-light" onClick={() => { localStorage.removeItem('token'); navigate('/'); }}>Cerrar sesión</Button>
+                            <Button variant="danger outline-light" onClick={handleLogout}>Cerrar sesión</Button>
                         </Nav>
                     </Navbar.Collapse>
                 </Container>
@@ -144,32 +150,33 @@ const Lots = () => {
                         <div className='card mb-4'>
                             <div className='card-header text-center'>{editMode ? 'Editar Lote' : 'Agregar Nuevo Lote'}</div>
                             <div className='card-body'>
-                                <form onSubmit={(e) => {
-                                    e.preventDefault();
-                                    editMode ? editLot(editLotId) : createLot();
-                                }}>
+                                <form onSubmit={(e) => { e.preventDefault(); editMode ? editLot(editLotId) : createLot(); }}>
                                     <div className='mb-3'>
                                         <label className='form-label'>Nombre</label>
                                         <input
-                                            type='text'
+                                            type="text"
+                                            name='name'
                                             className='form-control'
                                             value={lot.name}
+                                            placeholder="Nombre del lote"
                                             onChange={(e) => setLot({ ...lot, name: e.target.value })}
                                             required
                                         />
                                     </div>
                                     <div className='mb-3'>
-                                        <label className='form-label'>Área (hectáreas)</label>
+                                        <label className='form-label'>Área</label>
                                         <input
-                                            type='number'
+                                            type="number"
+                                            name='area'
                                             className='form-control'
                                             value={lot.area}
+                                            placeholder="Área (hectáreas)"
                                             onChange={(e) => setLot({ ...lot, area: e.target.value })}
                                             required
                                         />
                                     </div>
                                     <div className='d-grid gap-2 col-6 mx-auto'>
-                                        <button type='submit' className='btn btn-primary'>{editMode ? 'Actualizar' : 'Agregar'}</button>
+                                        <button type="submit" className='btn btn-primary'>{editMode ? 'Actualizar' : 'Crear'}</button>
                                     </div>
                                 </form>
                             </div>
@@ -177,34 +184,61 @@ const Lots = () => {
                     </div>
 
                     <div className='col'>
-                        <table className="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th scope="col">#</th>
-                                    <th scope="col">Nombre</th>
-                                    <th scope="col">Área (hectáreas)</th>
-                                    <th scope="col">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {lots.map((l, index) => (
-                                    <tr key={index}>
-                                        <td>{index + 1}</td>
-                                        <td>{l.name}</td>
-                                        <td>{l.area}</td>
-                                        <td>
-                                            <button className='btn btn-warning' onClick={() => handleEditClick(l._id)}>
-                                                <BsPencil />
-                                            </button>
-                                            <button className='btn btn-danger' onClick={() => disableLot(l._id)}>
-                                                <BsDashCircle />
-                                            </button>
-                                        </td>
+                        {currentLots.length === 0 ? (
+                            <div className="text-center">
+                                <h4>No hay lotes disponibles.</h4>
+                            </div>
+                        ) : (
+                            <table className="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">#</th>
+                                        <th scope="col">Nombre</th>
+                                        <th scope="col">Área (hectáreas)</th>
+                                        <th scope="col">Acciones</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {currentLots.map((lot, index) => (
+                                        <tr key={lot._id}>
+                                            <td>{index + 1}</td>
+                                            <td>{lot.name}</td>
+                                            <td>{lot.area}</td>
+                                            <td>
+                                                <button className='btn btn-warning' onClick={() => handleEditClick(lot._id)}><BsPencil /></button>
+                                                <button className='btn btn-danger' onClick={() => disableLot(lot._id)}><BsDashCircle /></button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
+
+                        <button className='btn btn-secondary' onClick={goToDisabledLots}>
+                            Ver Lotes Deshabilitados
+                        </button>
+
                     </div>
+
+                    {/* Paginación */}
+                    <div className="d-flex justify-content-center mt-4">
+                        <button
+                            className='btn btn-primary me-2'
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1} // Deshabilitar si está en la primera página
+                        >
+                            Anterior
+                        </button>
+                        <span className="mx-2">Página {currentPage}</span>
+                        <button
+                            className='btn btn-primary ms-2'
+                            onClick={() => setCurrentPage(prev => prev + 1)}
+                            disabled={currentPage === totalPages} // Deshabilitar si está en la última página
+                        >
+                            Siguiente
+                        </button>
+                    </div>
+
                 </div>
             </div>
 

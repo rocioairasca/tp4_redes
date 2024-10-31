@@ -51,6 +51,8 @@ const Dashboard = ({name}) => {
                     <Nav className="me-auto">
                     <Nav.Link as={Link} to="/dashboard">Dashboard</Nav.Link>
                     <Nav.Link as={Link} to="/products">Productos</Nav.Link>
+                    <Nav.Link as={Link} to="/lots">Lotes</Nav.Link>
+                    <Nav.Link as={Link} to="/usage">Registro de Usos</Nav.Link>
                     </Nav>
                     <Nav className="ms-auto">
                     <Navbar.Text className="me-3">

@@ -198,6 +198,8 @@ const Products = () => {
                         <Nav className="me-auto">
                         <Nav.Link as={Link} to="/dashboard">Dashboard</Nav.Link>
                         <Nav.Link as={Link} to="/products">Productos</Nav.Link>
+                        <Nav.Link as={Link} to="/lots">Lotes</Nav.Link>
+                        <Nav.Link as={Link} to="/usage">Registro de Usos</Nav.Link>
                         </Nav>
                         <Nav className="ms-auto">
                         <Navbar.Text className="me-3">
@@ -240,8 +242,8 @@ const Products = () => {
                                             required
                                         >
                                             <option value="">Seleccionar tipo</option>
-                                            <option value="liquido">Líquido</option>
-                                            <option value="polvo">Polvo</option>
+                                            <option value="Líquido">Líquido</option>
+                                            <option value="Polvo">Polvo</option>
                                         </select>
                                     </div>
                                     <div className="mb-3">

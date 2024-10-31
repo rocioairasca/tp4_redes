@@ -9,6 +9,7 @@ const lotSchema = new mongoose.Schema({
     type: Number,
     required: true, // Área en hectáreas
   },
+  isDisabled: { type: Boolean, default: false },
 });
 
 module.exports = mongoose.model('Lot', lotSchema);

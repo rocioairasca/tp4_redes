@@ -3,11 +3,10 @@ import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { Navbar, Nav, Container, Button } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
-
 import { BsArrowBarLeft, BsPlusCircle } from "react-icons/bs";
 
-const DisabledProducts = () => {
-    const [disabledProducts, setDisabledProducts] = useState([]);
+const DisabledLots = () => {
+    const [disabledLots, setDisabledLots] = useState([]);
     const [username, setUsername] = useState('');
 
     const [currentPage, setCurrentPage] = useState(1);
@@ -40,55 +39,48 @@ const DisabledProducts = () => {
         }
     }, [navigate]);
 
-    const fetchDisabledProducts = useCallback(async (page = 1) => {
+    const fetchDisabledLots = useCallback(async (page = 1) => {
         try {
             const token = localStorage.getItem('token');
             if (!token) {
                 navigate('/');
                 return;
             }
-            const response = await axios.get(`http://localhost:4000/api/products/disabled?page=${page}&limit=${limit}`, {
+            const response = await axios.get(`http://localhost:4000/api/lots/disabled?page=${page}&limit=${limit}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            setDisabledProducts(response.data.products);
+            setDisabledLots(response.data.lots);
             setTotalPages(response.data.totalPages);
             setCurrentPage(page);
         } catch (error) {
-            console.error('Error al obtener los productos deshabilitados:', error);
-            setDisabledProducts([]);
+            console.error('Error al obtener los lotes deshabilitados:', error);
+            setDisabledLots([]);
         }
     }, [navigate, limit]);
 
-    const enableProduct = async (id) => {
+    const enableLot = async (id) => {
         try {
-            // Obtén el token del local storage
             const token = localStorage.getItem('token');
-            // Controla si el token existe
             if (!token) {
                 console.error('Token no encontrado. Redirigiendo al inicio...');
-                navigate('/'); // Redirige si no hay token
+                navigate('/');
                 return;
             }
 
-            // Realiza la solicitud PATCH
-            await axios.patch(`http://localhost:4000/api/products/enable/${id}`,
-                { disabled: false },
-                {headers: { Authorization: `Bearer ${token}` }}
-            );
+            await axios.patch(`http://localhost:4000/api/lots/enable/${id}`, { disabled: false }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
 
-            // Actualiza la lista de productos deshabilitados
-            fetchDisabledProducts();
+            fetchDisabledLots();
         } catch (error) {
-            // Muestra el error en consola
-            console.error('Error al habilitar el producto:', error);
+            console.error('Error al habilitar el lote:', error);
         }
     };
 
-
     useEffect(() => {
         fetchUsername();
-        fetchDisabledProducts(currentPage);
-    }, [fetchDisabledProducts, fetchUsername, currentPage]);
+        fetchDisabledLots(currentPage);
+    }, [fetchDisabledLots, fetchUsername, currentPage]);
 
     return (
         <div>
@@ -118,36 +110,28 @@ const DisabledProducts = () => {
                 </Container>
             </Navbar>
 
-            <h1 className='text-center mt-2'>Productos Deshabilitados</h1>
+            <h1 className='text-center mt-2'>Lotes Deshabilitados</h1>
             <div className='mt-5 p-4'>
-                <button className='btn btn-primary' onClick={() => navigate('/products')}>
-                    <BsArrowBarLeft /> Productos
+                <button className='btn btn-primary' onClick={() => navigate('/lots')}>
+                    <BsArrowBarLeft /> Lotes
                 </button>
                 <table className="table table-striped">
                     <thead>
                         <tr>
                             <th scope="col">#</th>
                             <th scope="col">Nombre</th>
-                            <th scope="col">Tipo</th>
-                            <th scope="col">Cantidad Total</th>
-                            <th scope="col">Cantidad Disponible</th>
-                            <th scope='col'>Precio</th>
-                            <th scope='col'>Fecha de Adquisición</th>
+                            <th scope="col">Área (hectáreas)</th>
                             <th scope="col">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {Array.isArray(disabledProducts) && disabledProducts.map((prod, index) => (
-                            <tr key={prod._id}>
+                        {Array.isArray(disabledLots) && disabledLots.map((lot, index) => (
+                            <tr key={lot._id}>
                                 <td>{index + 1}</td>
-                                <td>{prod.name}</td>
-                                <td>{prod.type}</td>
-                                <td>{prod.totalQuantity} {prod.unit === 'lt' ? 'L' : 'Kg'}</td>
-                                <td>{prod.availableQuantity} {prod.unit === 'lt' ? 'L' : 'Kg'}</td>
-                                <td>${prod.price ? prod.price.toFixed(2) : 'N/A'}</td>
-                                <td>{new Date(prod.acquisitionDate).toLocaleDateString()}</td>
+                                <td>{lot.name}</td>
+                                <td>{lot.area}</td>
                                 <td>
-                                    <button className='btn btn-success' onClick={() => enableProduct(prod._id)}><BsPlusCircle /></button>
+                                    <button className='btn btn-success' onClick={() => enableLot(lot._id)}><BsPlusCircle /></button>
                                 </td>
                             </tr>
                         ))}
@@ -182,5 +166,4 @@ const DisabledProducts = () => {
     );
 };
 
-export default DisabledProducts;
-
+export default DisabledLots;

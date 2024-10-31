@@ -5,6 +5,9 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Products from './pages/Products';
 import DisabledProducts from './pages/DisabledProducts';
+import Lots from './pages/Lots';
+import DisabledLots from './pages/DisabledLots';
+import Usage from './pages/Usage';
 
 function App() {
   return (
@@ -16,6 +19,9 @@ function App() {
         <Route path='/dashboard' element={<Dashboard/>}/>
         <Route path='/products' element={<Products/>}/>
         <Route path="/products/disabled" element={<DisabledProducts />} />
+        <Route path='/lots' element={<Lots/>}/>
+        <Route path='/lots/disabled' element={<DisabledLots/>}/>
+        <Route path='/usage' element={<Usage/>}/>
       </Routes>
     </Router>
   );
