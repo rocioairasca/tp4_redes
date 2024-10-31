@@ -74,9 +74,7 @@ const DisabledProducts = () => {
             // Realiza la solicitud PATCH
             await axios.patch(`http://localhost:4000/api/products/enable/${id}`,
                 { disabled: false },
-                {
-                    headers: { Authorization: `Bearer ${token}` },
-                }
+                {headers: { Authorization: `Bearer ${token}` }}
             );
 
             // Actualiza la lista de productos deshabilitados
