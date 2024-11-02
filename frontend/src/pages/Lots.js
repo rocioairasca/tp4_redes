@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { useNavigate, Link } from 'react-router-dom';
-import { Navbar, Container, Nav, Button } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 import { BsPencil, BsDashCircle } from 'react-icons/bs';
 
 const Lots = () => {
     const [lots, setLots] = useState([]);
     const [lot, setLot] = useState({ name: '', area: '' });
-    const [username, setUsername] = useState('');
     const [editMode, setEditMode] = useState(false);
     const [editLotId, setEditLotId] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
@@ -22,30 +20,6 @@ const Lots = () => {
     const goToDisabledLots = () => {
         navigate('/lots/disabled');
     };
-
-    const fetchUsername = useCallback(async () => {
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                navigate('/');
-                return;
-            }
-            const response = await axios.get('http://localhost:4000/api/auth/me', {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            setUsername(response.data.name);
-        } catch (error) {
-            console.error('Error al obtener el nombre de usuario:', error);
-            if (error.response && error.response.status === 401) {
-                navigate('/');
-            }
-        }
-    }, [navigate]);
-
-    const handleLogout = useCallback(() => {
-        localStorage.removeItem('token');
-        navigate('/');
-    }, [navigate]);
 
     const fetchLots = useCallback(async () => {
         try {
@@ -110,9 +84,8 @@ const Lots = () => {
     };
 
     useEffect(() => {
-        fetchUsername();
         fetchLots();
-    }, [fetchLots, fetchUsername]);
+    }, [fetchLots]);
 
     // Calcular la paginación
     const totalPages = Math.ceil(lots.length / limit);
@@ -122,26 +95,6 @@ const Lots = () => {
 
     return (
         <div>
-            <Navbar bg="dark" variant="dark" expand="lg">
-                <Container fluid>
-                    <Navbar.Brand as={Link} to="/dashboard" className='mb-0 h1'>Stock Manager</Navbar.Brand>
-                    <Navbar.Toggle aria-controls="basic-navbar-nav" />
-                    <Navbar.Collapse id="basic-navbar-nav">
-                        <Nav className="me-auto">
-                            <Nav.Link as={Link} to="/dashboard">Dashboard</Nav.Link>
-                            <Nav.Link as={Link} to="/products">Productos</Nav.Link>
-                            <Nav.Link as={Link} to="/lots">Lotes</Nav.Link>
-                            <Nav.Link as={Link} to="/usage">Registro de Usos</Nav.Link>
-                        </Nav>
-                        <Nav className="ms-auto">
-                            <Navbar.Text className="me-3">
-                                Bienvenido, {username}!
-                            </Navbar.Text>
-                            <Button variant="danger outline-light" onClick={handleLogout}>Cerrar sesión</Button>
-                        </Nav>
-                    </Navbar.Collapse>
-                </Container>
-            </Navbar>
 
             <h1 className='text-center mt-2'>Gestión de Lotes</h1>
             <div className='mt-5 p-4'>
@@ -242,11 +195,6 @@ const Lots = () => {
                 </div>
             </div>
 
-            <footer>
-                <div className='container p-3 mt-5 border-top'>
-                    <small className='d-block text-muted text-center'>&copy; 2024 - Stock Manager</small>
-                </div>
-            </footer>
         </div>
     );
 };

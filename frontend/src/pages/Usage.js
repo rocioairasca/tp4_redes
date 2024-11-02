@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { useNavigate, Link } from 'react-router-dom';
-import { Navbar, Nav, Container, Button } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
+import {Button } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { BsPencil, BsDashCircle } from "react-icons/bs";
 
@@ -29,7 +29,7 @@ const Usage = () => {
     const [unit, setUnit] = useState('');
     const [lots, setLots] = useState([]);
     const [selectedLots, setSelectedLots] = useState([]);
-    const [totalHectares, setTotalHectares] = useState(0);
+    const [setTotalHectares] = useState(0);
 
     const token = localStorage.getItem('token');
     if (!token) {
@@ -224,24 +224,6 @@ const Usage = () => {
 
     return (
         <div>
-            <Navbar bg="dark" variant="dark" expand="lg">
-                <Container fluid>
-                    <Navbar.Brand as={Link} to="/dashboard" className='mb-0 h1'>Stock Manager</Navbar.Brand>
-                    <Navbar.Toggle aria-controls="basic-navbar-nav" />
-                    <Navbar.Collapse id="basic-navbar-nav">
-                        <Nav className="me-auto">
-                            <Nav.Link as={Link} to="/dashboard">Dashboard</Nav.Link>
-                            <Nav.Link as={Link} to="/products">Productos</Nav.Link>
-                            <Nav.Link as={Link} to="/lots">Lotes</Nav.Link>
-                            <Nav.Link as={Link} to="/usage">Registro de Usos</Nav.Link>
-                        </Nav>
-                        <Nav className="ms-auto">
-                            <Navbar.Text className="me-3">Bienvenido, {username}!</Navbar.Text>
-                            <Button variant="danger outline-light" onClick={() => { localStorage.removeItem('token'); navigate('/'); }}>Cerrar sesión</Button>
-                        </Nav>
-                    </Navbar.Collapse>
-                </Container>
-            </Navbar>
 
             <h1 className='text-center mt-2'>Gestión de Registros de Uso</h1>
             <div className='mt-5 p-4'>
@@ -383,12 +365,6 @@ const Usage = () => {
                     </div>
                 </div>
             </div>
-
-            <footer>
-                <div className='container p-3 mt-5 border-top'>
-                    <small className='d-block text-muted text-center'>&copy; 2024 - Stock Manager</small>
-                </div>
-            </footer>
 
         </div>
     );

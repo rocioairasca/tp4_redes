@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { useNavigate, Link } from 'react-router-dom';
-import { Navbar, Nav, Container, Button } from 'react-bootstrap';
-import 'bootstrap/dist/css/bootstrap.min.css';
-
+import { useNavigate } from 'react-router-dom';
+import { Table, Button, Form, Input, Select, Pagination, Space, Typography, Drawer } from 'antd';
 import { BsPencil, BsDashCircle } from "react-icons/bs";
+import { PlusCircleOutlined, LeftCircleOutlined } from '@ant-design/icons';
+import { notification } from 'antd';
 
+const { Title } = Typography;
+const { Option } = Select;
 
 const Products = () => {
     const [products, setProducts] = useState([]);
-    const [product, setProduct] = useState({ 
+    const [product, setProduct] = useState({
         name: '',
         type: '',
         totalQuantity: '',
@@ -18,13 +20,13 @@ const Products = () => {
         price: '',
         acquisitionDate: ''
     });
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [editProductId, setEditProductId] = useState(null);
-    const [username, setUsername] = useState('');
     const navigate = useNavigate();
 
     const [currentPage, setCurrentPage] = useState(1);
-    const [limit] = useState(10);
+    const [limit] = useState(8);
     const [totalProducts, setTotalProducts] = useState();
 
     const goToDisabledProducts = () => {
@@ -36,29 +38,13 @@ const Products = () => {
         navigate('/');
     }
 
-    const fetchUsername = useCallback(async () => {
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                navigate('/');
-                return;
-            }
-            const response = await axios.get('http://localhost:4000/api/auth/me', {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            setUsername(response.data.name);
-        } catch (error) {
-            console.error('Error al obtener el nombre de usuario:', error);
-            if (error.response && error.response.status === 401) {
-                navigate('/');
-            }
-        }
-    }, [navigate]);
-
-    const handleLogout = useCallback(() => {
-        localStorage.removeItem('token');
-        navigate('/');
-    }, [navigate]);
+    const openNotification = (type, message, description) => {
+        notification[type]({
+            message: message,
+            description: description,
+            placement: 'bottomRight', // Puedes cambiar la posición según tus preferencias
+        });
+    };
 
     const fetchProducts = useCallback(async () => {
         try {
@@ -89,7 +75,7 @@ const Products = () => {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setProducts([...products, response.data]);
-            setProduct({ 
+            setProduct({
                 name: '',
                 type: '',
                 totalQuantity: '',
@@ -98,9 +84,12 @@ const Products = () => {
                 price: '',
                 acquisitionDate: ''
             });
-            fetchProducts(); // Podrías omitir esto si ya has actualizado los productos
+            handleDrawerClose();
+            fetchProducts();
+            openNotification('success', 'Producto Agregado', 'El producto se ha agregado correctamente.');
         } catch (error) {
             console.error('Error creando producto:', error);
+            openNotification('error', 'Error al Agregar Producto', error.message);
         }
     };
 
@@ -125,7 +114,7 @@ const Products = () => {
             setProducts(products.map((a) => (a._id === id ? response.data : a)));
             setEditMode(false);
             setEditProductId(null);
-            setProduct({ 
+            setProduct({
                 name: '',
                 type: '',
                 totalQuantity: '',
@@ -134,7 +123,10 @@ const Products = () => {
                 price: '',
                 acquisitionDate: ''
             });
+            handleDrawerClose();
+            openNotification('success', 'Producto Modificado', 'El producto se ha modificado correctamente.');
         } catch (error) {
+            openNotification('error', 'Error al Modificar Producto', error.message);
             if (error.response) {
                 console.error('Error de respuesta del servidor:', error.response.data);
                 console.error('Código de estado:', error.response.status);
@@ -142,6 +134,47 @@ const Products = () => {
                 console.error('Error:', error.message);
             }
         }
+    };
+
+    const disableProducts = async (id) => {
+        try {
+            console.log('Deshabilitando producto con ID:', id); // Verifica el ID
+            const response = await axios.patch(`http://localhost:4000/api/products/disable/${id}`,
+                { isDisabled: true },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            console.log('Respuesta del servidor:', response.data);
+            fetchProducts(); 
+            openNotification('success', 'Producto Deshabilitado', 'El producto se ha deshabilitado correctamente.');
+        } catch (error) {
+            console.error('Error deshabilitando producto:', error);
+            openNotification('error', 'Error al Deshabilitar Producto', error.message);
+        }
+
+    };
+
+    const handleDrawerClose = () => {
+        setIsDrawerOpen(false);
+        setProduct({
+            name: '',
+            type: '',
+            totalQuantity: '',
+            availableQuantity: '',
+            unit: '',
+            price: '',
+            acquisitionDate: ''
+        });
+        setEditMode(false);
+        setEditProductId(null);
+    };
+
+    const handleFormSubmit = async () => {
+        if (editMode) {
+            await editProduct(editProductId);
+        } else {
+            await createProduct();
+        }
+        fetchProducts();
     };
 
     const handleEditClick = (id) => {
@@ -157,218 +190,168 @@ const Products = () => {
                 acquisitionDate: new Date(prodToEdit.acquisitionDate).toISOString().split('T')[0],
             });
             setEditProductId(id);
-            setEditMode(true); // Cambia a modo edición
-
-            console.log("ID del producto a editar:", id);
+            setEditMode(true);
+            setIsDrawerOpen(true);
         }
-    };
-
-    const disableProducts = async (id) => {
-        try {
-            console.log('Deshabilitando producto con ID:', id); // Verifica el ID
-            const response = await axios.patch(`http://localhost:4000/api/products/disable/${id}`, 
-                { isDisabled: true },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-            console.log('Respuesta del servidor:', response.data); // Muestra la respuesta
-            fetchProducts(); // Refresca la lista de productos después de deshabilitar
-        } catch (error) {
-            console.error('Error deshabilitando producto:', error);
-        }
-
     };
 
     useEffect(() => {
-        fetchUsername();
         fetchProducts();
-    }, [navigate, fetchProducts, fetchUsername]);
+    }, [navigate, fetchProducts]);
 
-    const totalPages = Math.ceil(totalProducts / limit); // Asegúrate de que `products` contenga la lista completa de productos
+    const columns = [
+        { title: '#', dataIndex: 'index', key: 'index', render: (_, __, index) => index + 1 },
+        { title: 'Nombre', dataIndex: 'name', key: 'name' },
+        { title: 'Tipo', dataIndex: 'type', key: 'type' },
+        {
+            title: 'Cantidad Total',
+            dataIndex: 'totalQuantity',
+            key: 'totalQuantity',
+            render: (text, record) => (
+                <span>
+                    {record.totalQuantity} {record.unit === 'lt' ? 'Lt' : 'Kg'}
+                </span>
+            )
+        },
+        {
+            title: 'Cantidad Disponible',
+            dataIndex: 'availableQuantity',
+            key: 'availableQuantity',
+            render: (text, record) => (
+                <span>
+                    {record.availableQuantity} {record.unit === 'lt' ? 'Lt' : 'Kg'}
+                </span>
+            )
+        },
+        {
+            title: 'Precio',
+            dataIndex: 'price',
+            key: 'price',
+            render: (text, record) => (
+                <span>
+                    ${parseFloat(record.price).toFixed(2)}
+                </span>
+            )
+        },
+        {
+            title: 'Fecha de Adquisición',
+            dataIndex: 'acquisitionDate',
+            key: 'acquisitionDate',
+            render: (text, record) => {
+                const date = new Date(record.acquisitionDate);
+                const formattedDate = date.toLocaleDateString('es-ES', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+                return formattedDate;
+            }
+        },
+        {
+            title: 'Acciones',
+            key: 'actions',
+            render: (_, record) => (
+                <Space>
+                    <Button type="primary" icon={<BsPencil />} onClick={() => handleEditClick(record._id)} />
+                    <Button type="primary" danger icon={<BsDashCircle />} onClick={() => disableProducts(record._id)} />
+                </Space>
+
+            )
+        }
+    ];
 
     return (
-        <div>
-            <Navbar bg="dark" variant="dark" expand="lg">
-                <Container fluid>
-                    <Navbar.Brand as={Link} to="/dashboard" className='mb-0 h1'>
-                    Stock Manager
-                    </Navbar.Brand>
+        <div style={{ padding: '24px' }}>
+            <Title level={2} className='text-center'>Gestión de Productos</Title>
 
-                    <Navbar.Toggle aria-controls="basic-navbar-nav" />
-                    <Navbar.Collapse id="basic-navbar-nav">
-                        <Nav className="me-auto">
-                        <Nav.Link as={Link} to="/dashboard">Dashboard</Nav.Link>
-                        <Nav.Link as={Link} to="/products">Productos</Nav.Link>
-                        <Nav.Link as={Link} to="/lots">Lotes</Nav.Link>
-                        <Nav.Link as={Link} to="/usage">Registro de Usos</Nav.Link>
-                        </Nav>
-                        <Nav className="ms-auto">
-                        <Navbar.Text className="me-3">
-                            Bienvenido, {username}!
-                        </Navbar.Text>
-                        <Button variant="danger outline-light" onClick={handleLogout}>Cerrar sesión</Button>
-                        </Nav>
-                    </Navbar.Collapse>
-                </Container>
-            </Navbar>
-
-            <h1 className='text-center mt-2'>Gestión de Productos</h1>
-            <div className='mt-5 p-4'>
-                <div className='row'>
-                    <div className='col-3'>
-                        <div className='card mb-4'>
-                            <div className='card-header text-center'>{editMode ? 'Editar Producto' : 'Agregar Nuevo Producto'}</div>
-                            <div className='card-body'>
-                                <form onSubmit={(e) => {
-                                    console.log('Formulario enviado');
-                                    e.preventDefault(); editMode ? editProduct(editProductId) : createProduct();}}>
-                                    <div className='mb-3'>
-                                        <label className='form-label'>Nombre</label>
-                                        <input
-                                            type='text'
-                                            name='name'
-                                            className='form-control'
-                                            value={product.name}
-                                            onChange={(e) => setProduct({ ...product, name: e.target.value })}
-                                            required
-                                        />
-                                    </div>
-                                    <div className='mb-3'>
-                                        <label className='form-label'>Tipo</label>
-                                        <select
-                                            className='form-control'
-                                            name='type'
-                                            value={product.type}
-                                            onChange={(e) => setProduct({ ...product, type: e.target.value })}
-                                            required
-                                        >
-                                            <option value="">Seleccionar tipo</option>
-                                            <option value="Líquido">Líquido</option>
-                                            <option value="Polvo">Polvo</option>
-                                        </select>
-                                    </div>
-                                    <div className="mb-3">
-                                        <label className="form-label">Cantidad Total</label>
-                                        <input
-                                            type="number"
-                                            name='totalQuantity'
-                                            className="form-control"
-                                            value={product.totalQuantity}
-                                            onChange={(e) => setProduct({ ...product, totalQuantity: e.target.value })}
-                                            required
-                                        />
-                                    </div>
-                                    <div className="mb-3">
-                                        <label className="form-label">Unidad</label>
-                                        <select
-                                            className="form-control"
-                                            name='unit'
-                                            value={product.unit}
-                                            onChange={(e) => setProduct({ ...product, unit: e.target.value })}
-                                            required
-                                        >
-                                            <option value="">Seleccionar unidad</option>
-                                            <option value="lt">Litros</option>
-                                            <option value="kg">Kilogramos</option>
-                                        </select>
-                                    </div>
-                                    <div className='mb-3'>
-                                        <label className='form-label'>Precio</label>
-                                        <input
-                                            type='number'
-                                            name='price'
-                                            className='form-control'
-                                            value={product.price}
-                                            onChange={(e) => setProduct({ ...product, price: e.target.value })}
-                                            required
-                                        />
-                                    </div>
-                                    <div className='mb-3'>
-                                        <label className='form-label'>Fecha de Adquisición</label>
-                                        <input
-                                            type='date'
-                                            name='acquisitionDate'
-                                            className='form-control'
-                                            value={product.acquisitionDate}
-                                            onChange={(e) => setProduct({ ...product, acquisitionDate: e.target.value })}
-                                            required
-                                        />
-                                    </div>
-                                    <div className='d-grid gap-2 col-6 mx-auto'>
-                                        <button type='submit' className='btn btn-primary'>{editMode ? 'Actualizar' : 'Agregar'}</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className='col'>
-                        <table className="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th scope="col">#</th>
-                                    <th scope="col">Nombre</th>
-                                    <th scope="col">Tipo</th>
-                                    <th scope="col">Cantidad Total</th>
-                                    <th scope="col">Cantidad Disponible</th>
-                                    <th scope='col'>Precio</th>
-                                    <th scope='col'>Fecha de Adquisición</th>
-                                    <th scope="col">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {products.map((prod, index) => (
-                                    <tr key={index}>
-                                        <td>{index + 1}</td>
-                                        <td>{prod.name}</td>
-                                        <td>{prod.type}</td>
-                                        <td style={{ textAlign: 'center' }}>{prod.totalQuantity} {prod.unit === 'lt' ? 'L' : 'Kg'}</td>
-                                        <td style={{ textAlign: 'center' }}>{prod.availableQuantity} {prod.unit === 'lt' ? 'L' : 'Kg'}</td>
-                                        <td>${prod.price ? prod.price.toFixed(2) : 'N/A'}</td> {/* Muestra el Precio */}
-                                        <td style={{ textAlign: 'center' }}>{new Date(prod.acquisitionDate).toLocaleDateString()}</td> {/* Muestra la Fecha de Adquisición */}
-                                        <td>
-                                            <button className='btn btn-warning' onClick={() => handleEditClick(prod._id)}>
-                                                <BsPencil />
-                                            </button>
-                                            <button className='btn btn-danger' onClick={() => disableProducts(prod._id)}>
-                                                <BsDashCircle />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-
-                        <button className='btn btn-secondary' onClick={goToDisabledProducts}>
-                            Ver Productos Deshabilitados
-                        </button>
-
-                        <div className="d-flex justify-content-center align-items-center">
-                            <button 
-                                className='btn btn-primary me-2' 
-                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                disabled={currentPage === 1} // Deshabilitar si está en la primera página
-                            >
-                                Anterior
-                            </button>
-                            <span className="mx-2">Página {currentPage}</span>
-                            <button 
-                                className='btn btn-primary ms-2' 
-                                onClick={() => setCurrentPage(prev => prev + 1)}
-                                disabled={currentPage === totalPages} // Deshabilitar si está en la última página
-                            >
-                                Siguiente
-                            </button>
-                        </div>
-
-                    </div>
-                </div>
+            <div style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end', marginBottom: '16px' }}>
+                <Button type="primary" icon={<PlusCircleOutlined />} size='large' onClick={() => setIsDrawerOpen(true)}>
+                    Agregar Producto
+                </Button>
+                <Button type="default" icon={<LeftCircleOutlined />} size='large' onClick={goToDisabledProducts}>
+                    Ver Productos Deshabilitados
+                </Button>
             </div>
 
-            <footer>
-                <div className='container p-3 mt-5 border-top'>
-                <small className='d-block text-muted text-center'>&copy; 2024 - Stock Manager</small>
-                </div>
-            </footer>
+            <Table
+                dataSource={products}
+                columns={columns}
+                pagination={false}
+                rowKey="_id"
+                style={{ width: '100%' }}
+            />
+
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px' }}>
+                <Pagination
+                    current={currentPage}
+                    pageSize={limit}
+                    total={totalProducts}
+                    onChange={(page) => setCurrentPage(page)}
+                    showSizeChanger={false}
+                />
+            </div>
+
+            <Drawer
+                title={editMode ? 'Editar Producto' : 'Agregar Producto'}
+                width={400}
+                onClose={handleDrawerClose}
+                visible={isDrawerOpen}
+            >
+                <Form layout="vertical" onFinish={handleFormSubmit}>
+                    <Form.Item label="Nombre" required>
+                        <Input
+                            value={product.name}
+                            onChange={(e) => setProduct({ ...product, name: e.target.value })}
+                        />
+                    </Form.Item>
+                    <Form.Item label="Tipo" required>
+                        <Select
+                            value={product.type}
+                            onChange={(value) => setProduct({ ...product, type: value })}
+                        >
+                            <Option value="Líquido">Líquido</Option>
+                            <Option value="Polvo">Polvo</Option>
+                        </Select>
+                    </Form.Item>
+                    <Form.Item label="Cantidad Total" required>
+                        <Input
+                            type="number"
+                            value={product.totalQuantity}
+                            onChange={(e) => setProduct({ ...product, totalQuantity: e.target.value })}
+                        />
+                    </Form.Item>
+                    <Form.Item label="Unidad" required>
+                        <Select
+                            value={product.unit}
+                            onChange={(value) => setProduct({ ...product, unit: value })}
+                        >
+                            <Option value="lt">Litros</Option>
+                            <Option value="kg">Kilogramos</Option>
+                        </Select>
+                    </Form.Item>
+                    <Form.Item label="Precio" required>
+                        <Input
+                            type="number"
+                            value={product.price}
+                            onChange={(e) => setProduct({ ...product, price: e.target.value })}
+                        />
+                    </Form.Item>
+                    <Form.Item label="Fecha de Adquisición" required>
+                        <Input
+                            type="date"
+                            value={product.acquisitionDate}
+                            onChange={(e) => setProduct({ ...product, acquisitionDate: e.target.value })}
+                        />
+                    </Form.Item>
+                    <Form.Item>
+                        <div style={{ display: 'flex', justifyContent: 'center' }}>
+                            <Button type="primary" htmlType="submit" icon={<PlusCircleOutlined />} size='large'>
+                                {editMode ? 'Guardar Cambios' : 'Agregar'}
+                            </Button>
+                        </div>
+                    </Form.Item>
+                </Form>
+            </Drawer>
         </div>
     );
 };
