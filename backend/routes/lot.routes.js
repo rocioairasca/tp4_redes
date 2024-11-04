@@ -1,3 +1,6 @@
+// manejo de ruteo de lotes sin controlador
+
+// requerimientos para el ruteo de los lotes
 const express = require('express');
 const Lot = require('../models/Lot');
 const verifyToken = require('../middleware/verifyToken');
@@ -14,7 +17,7 @@ router.post('/create', verifyToken, async (req, res) => {
   }
 });
 
-// Obtener todos los lotes (con paginado)
+// Obtener todos los lotes habilitados (con paginado)
 router.get('/all', verifyToken, async (req, res) => {
   const { page = 1, limit = 10 } = req.query;
   const skip = (page - 1) * limit;

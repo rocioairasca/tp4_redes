@@ -1,4 +1,6 @@
 // routes/productRoutes.js
+// manejo de rutas para el producto
+
 const express = require('express');
 const router = express.Router();
 const {

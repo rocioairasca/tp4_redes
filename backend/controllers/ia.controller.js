@@ -1,12 +1,16 @@
-// Importa la biblioteca
+// importaciones de la biblioteca de google para utilizar la IA
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 require('dotenv').config();
 
+// le pasamos el modelo de productos para que realice estadísticas en base a este
 const products = require('../models/Product');
 
 const generateContent = async (req, res) => {
+    // pasamos el modelo a una constante
     const data = await products.find();
     // console.log(data);
+
+    // le damos un prompt detallado para que nos realice estadisticas específicas
     const prompt = 
     `Te voy a pasar un JSON que contiene una lista de productos: ${JSON.stringify(data)}. Necesito que, teniendo en cuenta unicamente las entradas que tengan isDisabled en false, me devuelvas un JSON con los campos "productoMasCaro", "productoMasBarato", 
     "cantidadTipoPolvo", "cantidadTipoLiquido". productoMasCaro se calcula viendo cual de los productos tiene el valor mas alto en el campo price, devolveme solo el valor name y price. productoMasBarato se calcula 
@@ -29,6 +33,7 @@ const generateContent = async (req, res) => {
     }
 };
 
+// exportamos el módulo
 module.exports = {
     generateContent,
 };

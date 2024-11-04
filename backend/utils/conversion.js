@@ -1,3 +1,4 @@
+// funcion para convertir unidades en caso de que se pasaran en cc o g para poder restar o sumar correctamente
 function convertToCommonUnit(amount, unit, productType) {
     const conversionRates = {
         liquid: {

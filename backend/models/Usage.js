@@ -1,3 +1,4 @@
+// modelo para el registro de uso
 const mongoose = require('mongoose');
 
 const usageSchema = new mongoose.Schema({

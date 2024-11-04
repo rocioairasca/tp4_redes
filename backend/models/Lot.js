@@ -1,3 +1,4 @@
+// modelo para los lotes
 const mongoose = require('mongoose');
 
 const lotSchema = new mongoose.Schema({
@@ -7,7 +8,7 @@ const lotSchema = new mongoose.Schema({
   },
   area: {
     type: Number,
-    required: true, // Área en hectáreas
+    required: true, 
   },
   isDisabled: { type: Boolean, default: false },
 });

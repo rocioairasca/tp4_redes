@@ -1,7 +1,10 @@
+// manejo de rutas para el registro de usos
+
 const express = require('express');
 const Usage = require('../models/Usage');
 const Product = require('../models/Product');
 const verifyToken = require('../middleware/verifyToken');
+// logica de conversion para las unidades
 const { convertToCommonUnit } = require('../utils/conversion');
 const router = express.Router();
 
@@ -18,6 +21,7 @@ router.post('/register', verifyToken, async (req, res) => {
 
         const convertedAmount = convertToCommonUnit(amount, unit, product);
 
+        // control de cantidad disponible en producto seleccionado
         if (product.availableQuantity < convertedAmount) {
             return res.status(400).json({ message: 'Cantidad insuficiente en stock' });
         }
@@ -46,12 +50,12 @@ router.post('/register', verifyToken, async (req, res) => {
 
 // Obtener todos los registros habilitados con paginado
 router.get('/history', verifyToken, async (req, res) => {
-    const { page = 1, limit = 10 } = req.query; // Paginado
-    const skip = (page - 1) * limit; // Calcular el número de registros a saltar
+    const { page = 1, limit = 10 } = req.query; 
+    const skip = (page - 1) * limit; 
 
     try {
-        const totalUsages = await Usage.countDocuments({ isDisabled: false }); // Contar total de registros
-        const usages = await Usage.find({ isDisabled: false }).populate('product').skip(skip).limit(limit); // Aplicar paginado
+        const totalUsages = await Usage.countDocuments({ isDisabled: false }); 
+        const usages = await Usage.find({ isDisabled: false }).populate('product').skip(skip).limit(limit); 
 
         res.json({
             totalUsages,
@@ -109,12 +113,12 @@ router.patch('/edit/:id', verifyToken, async (req, res) => {
 
 // Obtener todos los registros habilitados con paginado
 router.get('/disabled', verifyToken, async (req, res) => {
-    const { page = 1, limit = 10 } = req.query; // Paginado
-    const skip = (page - 1) * limit; // Calcular el número de registros a saltar
+    const { page = 1, limit = 10 } = req.query; 
+    const skip = (page - 1) * limit; 
 
     try {
-        const totalUsages = await Usage.countDocuments({ isDisabled: true }); // Contar total de registros
-        const usages = await Usage.find({ isDisabled: true }).populate('product').skip(skip).limit(limit); // Aplicar paginado
+        const totalUsages = await Usage.countDocuments({ isDisabled: true }); 
+        const usages = await Usage.find({ isDisabled: true }).populate('product').skip(skip).limit(limit); 
 
         res.json({
             totalUsages,

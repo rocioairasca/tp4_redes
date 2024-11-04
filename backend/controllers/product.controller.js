@@ -1,6 +1,6 @@
 const Product = require('../models/Product');
 
-// Crear un producto
+// creacioón del producto
 const createProduct = async (req, res) => {
     console.log('Crear producto:', req.body);
     try {
@@ -12,7 +12,7 @@ const createProduct = async (req, res) => {
     }
 };
 
-// Obtener todos los productos
+// obtenemos todos los productos HABILITADOS y le pasamos paginado
 const getAllProducts = async (req, res) => {
     try {
         const page = Number(req.query.page) || 1;
@@ -47,7 +47,7 @@ const getProductById = async (req, res) => {
     }
 };
 
-// Actualizar un producto
+// actualizamos el producto
 const updateProduct = async (req, res) => {
     try {
         const updatedProduct = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -58,7 +58,7 @@ const updateProduct = async (req, res) => {
     }
 };
 
-// Deshabilitar un producto
+// deshabilitamos el producto cambiando isDisabled a true
 const disableProduct = async (req, res) => {
     try {
         const product = await Product.findByIdAndUpdate(
@@ -100,7 +100,7 @@ const getDisabledProducts = async (req, res) => {
     }
 };
 
-
+// habilitamos los productos deshabilitados cambiando isDesables a false
 const enableProduct = async (req, res) => {
     try {
         const productId = req.params.id;
@@ -111,7 +111,7 @@ const enableProduct = async (req, res) => {
 
         // Habilita el producto
         product.isDisabled = false;
-        await product.save(); // Guarda los cambios en la base de datos
+        await product.save(); 
 
         res.json({ message: 'Producto habilitado', product });
     } catch (error) {
@@ -119,7 +119,7 @@ const enableProduct = async (req, res) => {
     }
 };
 
-
+// exportamos los módulos
 module.exports = {
     createProduct,
     getAllProducts,

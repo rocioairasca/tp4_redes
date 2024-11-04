@@ -1,3 +1,4 @@
+// manejo de rutas para la IA
 const express = require('express');
 const { generateContent  } = require('../controllers/ia.controller');
 
