@@ -8,6 +8,7 @@ import Lots from './pages/Lots';
 import DisabledLots from './pages/DisabledLots';
 import Usage from './pages/Usage';
 import AppLayout from './pages/AppLayout';
+import DisabledUsage from './pages/DisabledUsage';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
           <Route path="/lots" element={<Lots />} />
           <Route path="/lots/disabled" element={<DisabledLots />} />
           <Route path="/usage" element={<Usage />} />
+          <Route path="/usage/disabled" element={<DisabledUsage />} />
         </Route>
       </Routes>
     </Router>

@@ -3,10 +3,10 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Table, Button, Pagination, message, Space } from 'antd';
 import { BsPlusCircle } from "react-icons/bs";
-import {LeftCircleOutlined} from '@ant-design/icons';
+import { LeftCircleOutlined } from '@ant-design/icons';
 
-const DisabledLots = () => {
-    const [disabledLots, setDisabledLots] = useState([]);
+const DisabledUsage = () => {
+    const [disabledUsages, setDisabledUsages] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
     const [limit] = useState(8);
@@ -18,26 +18,26 @@ const DisabledLots = () => {
         navigate('/');
     }
 
-    const fetchDisabledLots = useCallback(async (page = 1) => {
+    const fetchDisabledUsages = useCallback(async (page = 1) => {
         try {
             const token = localStorage.getItem('token');
             if (!token) {
                 navigate('/');
                 return;
             }
-            const response = await axios.get(`http://localhost:4000/api/lots/disabled?page=${page}&limit=${limit}`, {
+            const response = await axios.get(`http://localhost:4000/api/usages/disabled?page=${page}&limit=${limit}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            setDisabledLots(response.data.lots);
+            setDisabledUsages(response.data.usages);
             setTotalPages(response.data.totalPages);
             setCurrentPage(page);
         } catch (error) {
-            console.error('Error al obtener los lotes deshabilitados:', error);
-            setDisabledLots([]);
+            console.error('Error al obtener los usos deshabilitados:', error);
+            setDisabledUsages([]);
         }
     }, [navigate, limit]);
 
-    const enableLot = async (id) => {
+    const enableUsage = async (id) => {
         try {
             const token = localStorage.getItem('token');
             if (!token) {
@@ -46,31 +46,38 @@ const DisabledLots = () => {
                 return;
             }
 
-            await axios.patch(`http://localhost:4000/api/lots/enable/${id}`, { disabled: false }, {
+            await axios.patch(`http://localhost:4000/api/usages/enable/${id}`, { disabled: false }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            fetchDisabledLots();
-            message.success('Lote habilitado exitosamente');
+            fetchDisabledUsages();
+            message.success('Uso habilitado exitosamente');
         } catch (error) {
-            console.error('Error al habilitar el lote:', error);
+            console.error('Error al habilitar el uso:', error);
         }
     };
 
     useEffect(() => {
-        fetchDisabledLots(currentPage);
-    }, [fetchDisabledLots, currentPage]);
+        fetchDisabledUsages(currentPage);
+    }, [fetchDisabledUsages, currentPage]);
 
     const columns = [
         { title: '#', dataIndex: 'index', key: 'index', render: (_, __, index) => index + 1 },
-        { title: 'Nombre', dataIndex: 'name', key: 'name' },
-        { title: 'Área (hectáreas)', dataIndex: 'area', key: 'area' },
+        { title: 'Producto', dataIndex: 'product', key: 'product' },
+        { title: 'Cantidad', dataIndex: 'amount', key: 'amount' },
+        { title: 'Cultivo', dataIndex: 'crop', key: 'crop' },
+        {
+            title: 'Fecha',
+            dataIndex: 'date',
+            key: 'date',
+            render: (text) => new Date(text).toLocaleDateString(), // Formato de fecha
+        },
         {
             title: 'Acciones',
             key: 'actions',
             render: (_, record) => (
                 <Space size="middle">
-                    <Button type="primary" icon={<BsPlusCircle />} onClick={() => enableLot(record._id)} />
+                    <Button type="primary" icon={<BsPlusCircle />} onClick={() => enableUsage(record._id)} />
                 </Space>
             ),
         },
@@ -78,16 +85,16 @@ const DisabledLots = () => {
 
     return (
         <div>
-            <h1 className='text-center mt-2'>Lotes Deshabilitados</h1>
+            <h1 className='text-center mt-2'>Registros de Usos Deshabilitados</h1>
             <div className='mt-5 p-4'>
                 <div style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end', marginBottom: '16px' }}>
-                    <Button type="default" icon={<LeftCircleOutlined />} size='large' onClick={() => navigate('/lots')}>
-                        Lotes
+                    <Button type="default" icon={<LeftCircleOutlined />} size='large' onClick={() => navigate('/usage')}>
+                        Registro de Usos
                     </Button>
                 </div>
                 <Table
                     columns={columns}
-                    dataSource={disabledLots}
+                    dataSource={disabledUsages}
                     pagination={false}
                     rowKey="_id"
                     bordered
@@ -108,5 +115,4 @@ const DisabledLots = () => {
     );
 };
 
-export default DisabledLots;
-
+export default DisabledUsage;

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Table, Button, Space, Pagination, Typography } from 'antd';
 import { BsPlusCircle } from "react-icons/bs";
-import {LeftCircleOutlined} from '@ant-design/icons';
+import { LeftCircleOutlined } from '@ant-design/icons';
 import { notification } from 'antd';
 
 const { Title } = Typography;

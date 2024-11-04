@@ -6,6 +6,7 @@ const usageSchema = new mongoose.Schema({
     date: { type: Date, default: Date.now },
     lots: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Lot', }],
     totalArea: { type: Number, required: true, },
+    prevCrop: { type: String, required: true,},
     crop: { type: String, required: true,},
     user: String,
     isDisabled: { type: Boolean, default: false }
